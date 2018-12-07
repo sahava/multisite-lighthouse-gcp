@@ -1,0 +1,11 @@
+{
+  "name": "multisite-lighthouse-gcp",
+  "version": "0.0.1",
+  "description": "Run Lighthouse audits on URLs, and write the results daily into a BigQuery table.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Simo Ahava",
+  "license": "MIT"
+}
