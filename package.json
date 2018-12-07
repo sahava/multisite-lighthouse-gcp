@@ -3,9 +3,19 @@
   "version": "0.0.1",
   "description": "Run Lighthouse audits on URLs, and write the results daily into a BigQuery table.",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sahava/multisite-lighthouse-gcp.git"
+  },
+  "engines": {
+    "node": ">=8"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Simo Ahava",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "lighthouse": "^4.0.0-alpha.2-3.2.1"
+  }
 }
