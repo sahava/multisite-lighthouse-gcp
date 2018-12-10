@@ -7,5 +7,7 @@
 	  "output": ["csv"],
       "disableDeviceEmulation": true
     },
-    "chromeFlags": ["--no-sandbox"]
+    "chromeFlags": ["--no-sandbox"],
+    "projectId": "multisite-lighthouse-gcp",
+    "datasetId": "lighthouse"
 }

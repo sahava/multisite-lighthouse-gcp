@@ -9,14 +9,13 @@ const {promisify} = require('util');
 const writeFile = promisify(fs.writeFile);
 
 const bigquery = new BigQuery({
-  projectId: 'multisite-lighthouse-gcp'
+  projectId: config.projectId
 });
 
 async function launchLighthouse(url) {
   console.log(`Starting browser for ${url}`);
 
   const browser = await puppeteer.launch({args: ['--no-sandbox']});
-
 
   console.log(`Browser started for ${url}`);
 
@@ -34,6 +33,7 @@ async function launchLighthouse(url) {
   });
 
   config.lighthouseFlags.port = (new URL(browser.wsEndpoint())).port;
+
   console.log(`Starting lighthouse for ${url}`);
 
   const lhr = await lighthouse(url, config.lighthouseFlags);
@@ -58,23 +58,32 @@ async function launchLighthouse(url) {
 */
 
 exports.launchLighthouse = async (data, callback) => {
-  console.log('Received message, starting...');
+  try {
+    console.log('Received message, starting...');
 
-  await Promise.all(config.url.map(async (url) => {
-    const uuid = uuidv1();
-    const res = await launchLighthouse(url);
-    const metadata = {
-      sourceFormat: 'CSV',
-      skipLeadingRows: 1,
-      autodetect: true
-    };
-    await writeFile(`/tmp/${uuid}.csv`, res.report);
-    console.log(`Loading result from ${url} to BigQuery`);
-    const bqload = await bigquery
-      .dataset('lighthouse')
-      .table('test')
-      .load(`/tmp/${uuid}.csv`, metadata);
-    console.log(bqload[0].status.state);
-  }));
+    await Promise.all(config.url.map(async (url) => {
 
+      const uuid = uuidv1();
+      const metadata = {
+        sourceFormat: 'CSV',
+        skipLeadingRows: 1,
+        autodetect: true
+      };
+      const res = await launchLighthouse(url);
+
+      await writeFile(`/tmp/${uuid}.csv`, res.report);
+
+      console.log(`Loading result from ${url} to BigQuery`);
+
+      const bqload = await bigquery
+        .dataset(config.datasetId)
+        .table('reports')
+        .load(`/tmp/${uuid}.csv`, metadata);
+
+      if (bqload[0].status.state === 'DONE') { console.log(`BigQuery load complete for ${url}`) }
+
+    }));
+  } catch(e) {
+    console.error(e);
+  }
 };
