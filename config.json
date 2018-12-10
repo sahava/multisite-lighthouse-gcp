@@ -1,0 +1,11 @@
+{
+    "url": [
+      "https://www.simoahava.com/",
+      "https://www.simoahava.com/analytics/install-snowplow-on-the-google-cloud-platform/"
+    ],
+    "lighthouseFlags": {
+	  "output": ["csv"],
+      "disableDeviceEmulation": true
+    },
+    "chromeFlags": ["--no-sandbox"]
+}
