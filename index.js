@@ -1,18 +1,25 @@
+const {URL} = require('url');
+const fs = require('fs');
+const {promisify} = require('util');
+
 const puppeteer = require('puppeteer');
 const lighthouse = require('lighthouse');
-const {URL} = require('url');
-const config = require('./config.json');
-const {BigQuery} = require('@google-cloud/bigquery');
-const fs = require('fs');
 const uuidv1 = require('uuid/v1');
-const {promisify} = require('util');
-const writeFile = promisify(fs.writeFile);
-const bqSchema = require('./bigquery-schema.json');
+
+const {BigQuery} = require('@google-cloud/bigquery');
 const {PubSub} = require('@google-cloud/pubsub');
 
+const bqSchema = require('./bigquery-schema.json');
+const config = require('./config.json');
+
+// Make filesystem write work with async/await
+const writeFile = promisify(fs.writeFile);
+
+// Initialize new BQ and PS clients
 const bigquery = new BigQuery({
   projectId: config.projectId
 });
+
 const pubsub = new PubSub({
   projectId: config.projectId
 });
@@ -20,6 +27,7 @@ const pubsub = new PubSub({
 const log = console.log;
 
 async function launchLighthouse(id, url) {
+
   log(`${id}: Starting browser for ${url}`);
 
   const browser = await puppeteer.launch({args: ['--no-sandbox']});
@@ -54,6 +62,7 @@ async function launchLighthouse(id, url) {
   return lhr;
 }
 
+// Parse the Lighthouse response and convert it to the BQ schema format
 function createJSON(obj) {
   return {
     fetch_time: obj.fetchTime,
@@ -145,6 +154,7 @@ function createJSON(obj) {
   }
 }
 
+// Convert object to newline-delimited JSON
 function toNdjson(data) {
   data = Array.isArray(data) ? data : [data];
   let outNdjson = '';
@@ -154,6 +164,7 @@ function toNdjson(data) {
   return outNdjson;
 }
 
+// Send all ids in config.json as new Pub/Sub messages
 async function sendAllPubsubMsgs(ids) {
   await Promise.all(ids.map(async (id) => {
     const msg = Buffer.from(id);
@@ -166,12 +177,14 @@ async function sendAllPubsubMsgs(ids) {
   }));
 }
 
+// The Cloud Function
 exports.launchLighthouse = async (event, callback) => {
   try {
 
     const msg = Buffer.from(event.data, 'base64').toString();
     const ids = config.source.map(obj => obj.id);
 
+    // If the Pub/Sub message is not valid
     if (msg !== 'all' && !ids.includes(msg)) { return log('No valid message found!'); }
 
     if (msg === 'all') { return sendAllPubsubMsgs(ids); }
@@ -189,8 +202,6 @@ exports.launchLighthouse = async (event, callback) => {
       jobId: uuid
     };
 
-    const jobId = metadata.jobId;
-
     const res = await launchLighthouse(id, url);
 
     const json = createJSON(res.lhr);
@@ -204,7 +215,7 @@ exports.launchLighthouse = async (event, callback) => {
       .table('reports')
       .load(`/tmp/${uuid}.json`, metadata);
 
-    log(`${id}: Job with ID ${jobId} started for ${url}`);
+    log(`${id}: Job with ID ${uuid} started for ${url}`);
 
   } catch(e) {
     console.error(e);
