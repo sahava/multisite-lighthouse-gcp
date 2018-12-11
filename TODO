@@ -1,4 +1,6 @@
-- run each URL in its own Cloud Function, dont' wait for BQ to complete
-- config.json in GCS?
-- Cloud Scheduler to run task daily/weekly.
-- Store HTML in GCS or Google Drive?
+- Maintain config.json in Google Cloud Storage? Would make it easier to update it without having to re-deploy the function.
+- Show how to use Cloud Scheduler to run the audit every night or once per week, for example.
+- Store the generated HTML output in Cloud Storage or Google Drive.
+- Perhaps partition the BigQuery table by fetch_time?
+- Simple Data Studio report to show progress.
+- Add network conditions management to Lighthouse - throttle / increase network speed, for example.
