@@ -1,3 +1,4 @@
+- run each URL in its own Cloud Function, dont' wait for BQ to complete
 - config.json in GCS?
 - Cloud Scheduler to run task daily/weekly.
 - Store HTML in GCS or Google Drive?
