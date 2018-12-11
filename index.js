@@ -8,19 +8,23 @@ const uuidv1 = require('uuid/v1');
 const {promisify} = require('util');
 const writeFile = promisify(fs.writeFile);
 const bqSchema = require('./bigquery-schema.json');
+const {PubSub} = require('@google-cloud/pubsub');
 
 const bigquery = new BigQuery({
   projectId: config.projectId
 });
+const pubsub = new PubSub({
+  projectId: config.projectId
+});
 
-let log = () => {};
+const log = console.log;
 
-async function launchLighthouse(url) {
-  log(`Starting browser for ${url}`);
+async function launchLighthouse(id, url) {
+  log(`${id}: Starting browser for ${url}`);
 
   const browser = await puppeteer.launch({args: ['--no-sandbox']});
 
-  log(`Browser started for ${url}`);
+  log(`${id}: Browser started for ${url}`);
 
   browser.on('targetchanged', async target => {
     const page = await target.page();
@@ -37,15 +41,15 @@ async function launchLighthouse(url) {
 
   config.lighthouseFlags.port = (new URL(browser.wsEndpoint())).port;
 
-  log(`Starting lighthouse for ${url}`);
+  log(`${id}: Starting lighthouse for ${url}`);
 
   const lhr = await lighthouse(url, config.lighthouseFlags);
 
-  log(`Lighthouse done for ${url}`);
+  log(`${id}: Lighthouse done for ${url}`);
 
   await browser.close();
 
-  log(`Browser closed for ${url}`);
+  log(`${id}: Browser closed for ${url}`);
 
   return lhr;
 }
@@ -150,45 +154,58 @@ function toNdjson(data) {
   return outNdjson;
 }
 
-function logMsg(msg) {
-  console.log(msg);
+async function sendAllPubsubMsgs(ids) {
+  await Promise.all(ids.map(async (id) => {
+    const msg = Buffer.from(id);
+    log(`${id}: Sending init PubSub message`);
+    await pubsub
+      .topic(config.pubsubTopicId)
+      .publisher()
+      .publish(msg);
+    log(`${id}: Init PubSub message sent`)
+  }));
 }
 
 exports.launchLighthouse = async (event, callback) => {
   try {
-    log = Buffer.from(event.data, 'base64').toString() === 'debug' ? logMsg : () => {};
 
-    log('Received message, starting...');
+    const msg = Buffer.from(event.data, 'base64').toString();
+    const ids = config.source.map(obj => obj.id);
 
-    await Promise.all(config.source.map(async (url) => {
+    if (msg !== 'all' && !ids.includes(msg)) { return log('No valid message found!'); }
 
-      const uuid = uuidv1();
-      const metadata = {
-        sourceFormat: 'NEWLINE_DELIMITED_JSON',
-        schema: {fields: bqSchema}
-      };
-      const res = await launchLighthouse(url);
+    if (msg === 'all') { return sendAllPubsubMsgs(ids); }
 
-      const json = createJSON(res.lhr);
+    const [src] = config.source.filter(obj => obj.id === msg);
+    const id = src.id;
+    const url = src.url;
 
-      await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
+    log(`${id}: Received message to start with URL ${url}`);
 
-      log(`Loading result from ${url} to BigQuery`);
+    const uuid = uuidv1();
+    const metadata = {
+      sourceFormat: 'NEWLINE_DELIMITED_JSON',
+      schema: {fields: bqSchema},
+      jobId: uuid
+    };
 
-      const [bqload] = await bigquery
-        .dataset(config.datasetId)
-        .table('reports')
-        .load(`/tmp/${uuid}.json`, metadata);
+    const jobId = metadata.jobId;
 
-      if (bqload.status.state === 'DONE') { log(`BigQuery load complete for ${url}`) }
+    const res = await launchLighthouse(id, url);
 
-      const errors = bqload.status.errors;
+    const json = createJSON(res.lhr);
 
-      if (errors && errors.length > 0) {
-        throw errors;
-      }
+    await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
 
-    }));
+    log(`${id}: Loading result from ${url} to BigQuery`);
+
+    bigquery
+      .dataset(config.datasetId)
+      .table('reports')
+      .load(`/tmp/${uuid}.json`, metadata);
+
+    log(`${id}: Job with ID ${jobId} started for ${url}`);
+
   } catch(e) {
     console.error(e);
   }

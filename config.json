@@ -1,12 +1,18 @@
 {
     "source": [
-      "https://www.simoahava.com/",
-      "https://www.simoahava.com/analytics/install-snowplow-on-the-google-cloud-platform/"
+      {
+        "url": "https://www.simoahava.com/",
+        "id": "homepage"
+      },{
+        "url": "https://www.simoahava.com/analytics/install-snowplow-on-the-google-cloud-platform/",
+        "id": "install-snowplow"
+      }
     ],
     "lighthouseFlags": {
 	  "output": ["html"],
       "emulatedFormFactor": "desktop"
     },
+    "pubsubTopicId": "launch-lighthouse",
     "chromeFlags": ["--no-sandbox"],
     "projectId": "multisite-lighthouse-gcp",
     "datasetId": "lighthouse"
