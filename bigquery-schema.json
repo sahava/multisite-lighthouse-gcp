@@ -1,0 +1,400 @@
+[
+  {
+    "description": "Timestamp when the audit was performed.",
+    "name": "fetch_time",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "URL that was audited.",
+    "name": "url",
+    "type": "STRING"
+  },
+  {
+    "description": "User-Agent string of the browser that did the audit.",
+    "name": "user_agent",
+    "type": "STRING"
+  },
+  {
+    "description": "The device type that was emulated for the audit.",
+    "name": "emulated_as",
+    "type": "STRING"
+  },
+  {
+    "description": "These checks highlight opportunities to [improve the accessibility of your web app](https://developers.google.com/web/fundamentals/accessibility). Only a subset of accessibility issues can be automatically detected so manual testing is also encouraged.",
+    "name": "accessibility",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "description": "Total score of this category.",
+        "name": "total_score",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Adding ways to bypass repetitive content lets keyboard users navigate the page more efficiently. [Learn more](https://dequeuniversity.com/rules/axe/2.2/bypass?application=lighthouse).",
+        "name": "bypass_repetitive_content",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Low-contrast text is difficult or impossible for many users to read. [Learn more](https://dequeuniversity.com/rules/axe/2.2/color-contrast?application=lighthouse).",
+        "name": "color_contrast",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/title).",
+        "name": "document_title_found",
+        "type": "BOOLEAN"
+      },
+      {
+        "descrition": "The value of an id attribute must be unique to prevent other instances from being overlooked by assistive technologies. [Learn more](https://dequeuniversity.com/rules/axe/2.2/duplicate-id?application=lighthouse).",
+        "name": "no_duplicate_id_attribute",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "If a page doesn't specify a lang attribute, a screen reader assumes that the page is in the default language that the user chose when setting up the screen reader. If the page isn't actually in the default language, then the screen reader might not announce the page's text correctly. [Learn more](https://dequeuniversity.com/rules/axe/2.2/html-lang?application=lighthouse).",
+        "name": "html_has_lang_attribute",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Specifying a valid [BCP 47 language](https://www.w3.org/International/questions/qa-choosing-language-tags#question) helps screen readers announce text properly. [Learn more](https://dequeuniversity.com/rules/axe/2.2/valid-lang?application=lighthouse).",
+        "name": "html_lang_is_valid",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Informative elements should aim for short, descriptive alternate text. Decorative elements can be ignored with an empty alt attribute. [Learn more](https://dequeuniversity.com/rules/axe/2.2/image-alt?application=lighthouse).",
+        "name": "images_have_alt_attribute",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Labels ensure that form controls are announced properly by assistive technologies, like screen readers. [Learn more](https://dequeuniversity.com/rules/axe/2.2/label?application=lighthouse).",
+        "name": "form_elements_have_labels",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Link text (and alternate text for images, when used as links) that is discernible, unique, and focusable improves the navigation experience for screen reader users. [Learn more](https://dequeuniversity.com/rules/axe/2.2/link-name?application=lighthouse).",
+        "name": "links_have_names",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Screen readers have a specific way of announcing lists. Ensuring proper list structure aids screen reader output. [Learn more](https://dequeuniversity.com/rules/axe/2.2/list?application=lighthouse).",
+        "name": "lists_are_well_formed",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Screen readers require list items (`<li>`) to be contained within a parent `<ul>` or `<ol>` to be announced properly. [Learn more](https://dequeuniversity.com/rules/axe/2.2/listitem?application=lighthouse).",
+        "name": "list_items_within_proper_parents",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Disabling zooming is problematic for users with low vision who rely on screen magnification to properly see the contents of a web page. [Learn more](https://dequeuniversity.com/rules/axe/2.2/meta-viewport?application=lighthouse).",
+        "name": "meta_viewport_allows_zoom",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "name": "best_practices",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "description": "Total score of this category.",
+        "name": "total_score",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Application Cache is deprecated. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/appcache).",
+        "name": "avoid_application_cache",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Web SQL is deprecated. Consider using IndexedDB instead. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/web-sql).",
+        "name": "no_web_sql",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "All sites should be protected with HTTPS, even ones that don't handle sensitive data. HTTPS prevents intruders from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite for HTTP/2 and many new web platform APIs. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/https).",
+        "name": "uses_https",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "HTTP/2 offers many benefits over HTTP/1.1, including binary headers, multiplexing, and server push. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/http2).",
+        "name": "uses_http2",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Consider marking your touch and wheel event listeners as `passive` to improve your page's scroll performance. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/passive-event-listeners).",
+        "name": "uses_passive_event_listeners",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "For users on slow connections, external scripts dynamically injected via `document.write()` can delay page load by tens of seconds. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/document-write).",
+        "name": "no_document_write",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Add rel=\"noopener\" or rel=\"noreferrer\" to any external links to improve performance and prevent security vulnerabilities. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/noopener).",
+        "name": "external_anchors_use_rel_noopener",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Users are mistrustful of or confused by sites that request their location without context. Consider tying the request to user gestures instead. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/geolocation-on-load).",
+        "name": "no_geolocation_on_start",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Specifying a doctype prevents the browser from switching to quirks-mode.Read more on the [MDN Web Docs page](https://developer.mozilla.org/en-US/docs/Glossary/Doctype)",
+        "name": "doctype_defined",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Some third-party scripts may contain known security vulnerabilities that are easily identified and exploited by attackers. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/vulnerabilities).",
+        "name": "no_vulnerable_libraries",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Users are mistrustful of or confused by sites that request to send notifications without context. Consider tying the request to user gestures instead. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/notifications-on-load).",
+        "name": "notification_asked_on_start",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Deprecated APIs will eventually be removed from the browser. [Learn more](https://www.chromestatus.com/features#deprecated).",
+        "name": "avoid_deprecated_apis",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Preventing password pasting undermines good security policy. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/password-pasting).",
+        "name": "allow_paste_to_password_field",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns.",
+        "name": "errors_in_console",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Image display dimensions should match natural aspect ratio. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/aspect-ratio).",
+        "name": "images_have_correct_aspect_ratio",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "name": "performance",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "description": "Total score of this category.",
+        "name": "total_score",
+        "type": "FLOAT"
+      },
+      {
+        "description": "First Contentful Paint marks the time at which the first text or image is painted. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/first-contentful-paint).",
+        "name": "first_contentful_paint",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "raw_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "score",
+            "type": "FLOAT"
+          }
+        ]
+      },
+      {
+        "description": "First Meaningful Paint measures when the primary content of a page is visible. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/first-meaningful-paint).",
+        "name": "first_meaningful_paint",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "raw_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "score",
+            "type": "FLOAT"
+          }
+        ]
+      },
+      {
+        "description": "Speed Index shows how quickly the contents of a page are visibly populated. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/speed-index).",
+        "name": "speed_index",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "raw_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "score",
+            "type": "FLOAT"
+          }
+        ]
+      },
+      {
+        "description": "Interactive marks the time at which the page is fully interactive. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/consistently-interactive).",
+        "name": "page_interactive",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "raw_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "score",
+            "type": "FLOAT"
+          }
+        ]
+      },
+      {
+        "description": "First CPU Idle marks the first time at which the page's main thread is quiet enough to handle input. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/first-interactive).",
+        "name": "first_cpu_idle",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "raw_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "score",
+            "type": "FLOAT"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "description": "These checks validate the aspects of a Progressive Web App, as specified by the baseline [PWA Checklist](https://developers.google.com/web/progressive-web-apps/checklist).",
+    "name": "pwa",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "description": "Total score of this category.",
+        "name": "total_score",
+        "type": "FLOAT"
+      },
+      {
+        "description": "A fast page load over a 3G network ensures a good mobile user experience. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/fast-3g).",
+        "name": "load_fast_enough",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "If you're building a Progressive Web App, consider using a service worker so that your app can work offline. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/http-200-when-offline).",
+        "name": "works_offline",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/install-prompt).",
+        "name": "webapp_install_banner",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "All sites should be protected with HTTPS, even ones that don't handle sensitive data. HTTPS prevents intruders from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite for HTTP/2 and many new web platform APIs. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/https).",
+        "name": "uses_https",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "If you've already set up HTTPS, make sure that you redirect all HTTP traffic to HTTPS. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/http-redirects-to-https).",
+        "name": "redirects_http_to_https",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Add a viewport meta tag to optimize your app for mobile screens. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/has-viewport-meta-tag).",
+        "name": "has_meta_viewport",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The service worker is the technology that enables your app to use many Progressive Web App features, such as offline, add to homescreen, and push notifications. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/registered-service-worker).",
+        "name": "uses_service_worker",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Your app should display some content when JavaScript is disabled, even if it's just a warning to the user that JavaScript is required to use the app. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/no-js).",
+        "name": "works_without_javascript",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "A themed splash screen ensures a high-quality experience when users launch your app from their homescreens. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/custom-splash-screen).",
+        "name": "splash_screen_found",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The browser address bar can be themed to match your site. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/address-bar).",
+        "name": "themed_address_bar",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "description": "These checks ensure that your page is optimized for search engine results ranking. There are additional factors Lighthouse does not check that may affect your search ranking. [Learn more](https://support.google.com/webmasters/answer/35769).",
+    "name": "seo",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "fields": [
+      {
+        "description": "Total score of this category.",
+        "name": "total_score",
+        "type": "FLOAT"
+      },
+      {
+        "description": "Add a viewport meta tag to optimize your app for mobile screens. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/has-viewport-meta-tag).",
+        "name": "has_meta_viewport",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/title).",
+        "name": "document_title_found",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Meta descriptions may be included in search results to concisely summarize page content. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/description).",
+        "name": "meta_description",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Pages with unsuccessful HTTP status codes may not be indexed properly. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/successful-http-code).",
+        "name": "http_status_code",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Descriptive link text helps search engines understand your content. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/descriptive-link-text).",
+        "name": "descriptive_link_text",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Search engines are unable to include your pages in search results if they don't have permission to crawl them. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/indexing).",
+        "name": "is_crawlable",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or indexed.",
+        "name": "robots_txt_valid",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "hreflang links tell search engines what version of a page they should list in search results for a given language or region. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/hreflang).",
+        "name": "hreflang_valid",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Font sizes less than 12px are too small to be legible and require mobile visitors to “pinch to zoom” in order to read. Strive to have >60% of page text ≥12px. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/font-sizes).",
+        "name": "font_size_ok",
+        "type": "BOOLEAN"
+      },
+      {
+        "description": "Search engines can't index plugin content, and many devices restrict plugins or don't support them. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/plugins).",
+        "name": "plugins_ok",
+        "type": "BOOLEAN"
+      }
+    ]
+  }
+]
