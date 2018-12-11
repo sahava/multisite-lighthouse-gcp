@@ -1,3 +1,4 @@
+- Write tests for code
 - Maintain config.json in Google Cloud Storage? Would make it easier to update it without having to re-deploy the function.
 - Show how to use Cloud Scheduler to run the audit every night or once per week, for example.
 - Store the generated HTML output in Cloud Storage or Google Drive.
