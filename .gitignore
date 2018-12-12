@@ -1,3 +1,5 @@
 .idea
 node_modules
 .gcloudignore
+package-lock.json
+.DS_STORE

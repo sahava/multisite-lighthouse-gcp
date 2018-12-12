@@ -1,0 +1,20 @@
+{
+  "source": [
+    {
+      "url": "https://www.google.com/",
+      "id": "googlesearch"
+    },
+    {
+      "url": "https://www.ebay.com/",
+      "id": "ebay"
+    }
+  ],
+  "projectId": "gcloud-project-id",
+  "datasetId": "lighthouse",
+  "lighthouseFlags": {
+    "output": ["html"],
+    "emulatedFormFactor": "desktop"
+  },
+  "pubsubTopicId": "launch-lighthouse",
+  "chromeFlags": ["--no-sandbox"]
+}

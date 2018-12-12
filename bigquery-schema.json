@@ -6,7 +6,12 @@
   },
   {
     "description": "URL that was audited.",
-    "name": "url",
+    "name": "site_url",
+    "type": "STRING"
+  },
+  {
+    "description": "Site ID and Pub/Sub trigger message.",
+    "name": "site_id",
     "type": "STRING"
   },
   {

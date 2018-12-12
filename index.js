@@ -26,7 +26,7 @@ const pubsub = new PubSub({
 
 const log = console.log;
 
-async function launchLighthouse(id, url) {
+async function launchBrowserWithLighthouse(id, url) {
 
   log(`${id}: Starting browser for ${url}`);
 
@@ -38,8 +38,8 @@ async function launchLighthouse(id, url) {
     const page = await target.page();
 
     if (page && page.url() === url) {
-      // Do something with network conditions
-      /*
+      /*Do something with network conditions
+      
       const client = await page.target().createCDPSession();
       await client.send('Runtime.evaluate', {
         expression: `(${addStyleContent.toString()})('${css}')`
@@ -63,10 +63,11 @@ async function launchLighthouse(id, url) {
 }
 
 // Parse the Lighthouse response and convert it to the BQ schema format
-function createJSON(obj) {
+function createJSON(obj, id) {
   return {
     fetch_time: obj.fetchTime,
-    url: obj.finalUrl,
+    site_url: obj.finalUrl,
+    site_id: id,
     user_agent: obj.userAgent,
     emulated_as: obj.configSettings.emulatedFormFactor,
     accessibility: [{
@@ -166,7 +167,7 @@ function toNdjson(data) {
 
 // Send all ids in config.json as new Pub/Sub messages
 async function sendAllPubsubMsgs(ids) {
-  await Promise.all(ids.map(async (id) => {
+  return await Promise.all(ids.map(async (id) => {
     const msg = Buffer.from(id);
     log(`${id}: Sending init PubSub message`);
     await pubsub
@@ -202,20 +203,18 @@ exports.launchLighthouse = async (event, callback) => {
       jobId: uuid
     };
 
-    const res = await launchLighthouse(id, url);
+    const res = await launchBrowserWithLighthouse(id, url);
 
-    const json = createJSON(res.lhr);
+    const json = createJSON(res.lhr, id);
 
     await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
 
-    log(`${id}: Loading result from ${url} to BigQuery`);
+    log(`${id}: BigQuery job with ID ${uuid} starting for ${url}`);
 
-    bigquery
+    return bigquery
       .dataset(config.datasetId)
       .table('reports')
       .load(`/tmp/${uuid}.json`, metadata);
-
-    log(`${id}: Job with ID ${uuid} started for ${url}`);
 
   } catch(e) {
     console.error(e);
