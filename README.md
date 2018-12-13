@@ -39,4 +39,4 @@ This is extremely low-cost. You should basically be able to work with the free t
 
 # Todo
 
-Check the TODO file. 
+See [ISSUES](https://github.com/sahava/multisite-lighthouse-gcp/issues).
