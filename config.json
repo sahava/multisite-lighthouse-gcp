@@ -1,11 +1,11 @@
 {
   "source": [
     {
-      "url": "https://www.simoahava.com/",
-      "id": "homepage"
+      "url": "https://www.google.com/",
+      "id": "googlesearch"
     },{
-      "url": "https://www.simoahava.com/analytics/install-snowplow-on-the-google-cloud-platform/",
-      "id": "install-snowplow"
+      "url": "https://www.ebay.com/",
+      "id": "ebay"
     }
   ],
   "projectId": "multisite-lighthouse-gcp",
@@ -14,6 +14,5 @@
     "output": ["html"],
     "emulatedFormFactor": "desktop"
   },
-  "pubsubTopicId": "launch-lighthouse",
-  "chromeFlags": ["--no-sandbox"]
+  "pubsubTopicId": "launch-lighthouse"
 }

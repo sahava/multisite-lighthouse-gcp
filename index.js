@@ -1,16 +1,16 @@
-const {URL} = require('url');
-const fs = require('fs');
-const {promisify} = require('util');
+const {URL} = require(`url`);
+const fs = require(`fs`);
+const {promisify} = require(`util`);
 
-const puppeteer = require('puppeteer');
-const lighthouse = require('lighthouse');
-const uuidv1 = require('uuid/v1');
+const puppeteer = require(`puppeteer`);
+const lighthouse = require(`lighthouse`);
+const uuidv1 = require(`uuid/v1`);
 
-const {BigQuery} = require('@google-cloud/bigquery');
-const {PubSub} = require('@google-cloud/pubsub');
+const {BigQuery} = require(`@google-cloud/bigquery`);
+const {PubSub} = require(`@google-cloud/pubsub`);
 
-const bqSchema = require('./bigquery-schema.json');
-const config = require('./config.json');
+const bqSchema = require(`./bigquery-schema.json`);
+const config = require(`./config.json`);
 
 // Make filesystem write work with async/await
 const writeFile = promisify(fs.writeFile);
