@@ -1,17 +1,7 @@
-'use strict';
-
-const sinon = require(`sinon`);
+'use strict';const sinon = require(`sinon`);
 const test = require(`ava`);
 const proxyquire = require(`proxyquire`).noCallThru();
 const tools = require(`@google-cloud/nodejs-repo-tools`);
-const lhrMockObject = require(`./lhrMockObject`);
-
-const table = {load: sinon.stub().returns(Promise.resolve())};
-table.get = sinon.stub().returns(Promise.resolve([table]));
-const dataset = {table: sinon.stub().returns(table)};
-dataset.get = sinon.stub().returns(Promise.resolve([dataset]));
-const bigquery = {dataset: sinon.stub().returns(dataset)};
-const BigQueryMock = sinon.stub().returns(bigquery);
 
 const mockConfig = require(`./config.test`);
 
@@ -37,25 +27,16 @@ function getSample() {
     topic: sinon.stub().returns(topicMock)
   };
   const PubSubMock = sinon.stub().returns(pubsubMock);
-  const browserMock = {
-    close: sinon.stub().returns(Promise.resolve()),
-    on: sinon.stub(),
-    wsEndpoint: sinon.stub().returns('https://www.google.com/')
-  };
-  const puppeteerMock = {
-    launch: sinon.stub().returns(Promise.resolve(browserMock))
-  };
-  const lighthouseMock = sinon.stub().returns(Promise.resolve({
-    lhr: lhrMockObject
-  }));
-  const writeFileMock = sinon.stub();
+  const fsMock = {
+    writeFile: sinon.stub().returns(Promise.resolve())
+  }                                                   ;
   return {
     program: proxyquire(`../`, {
       './config.json': config,
       '@google-cloud/bigquery': {BigQuery: BigQueryMock},
       '@google-cloud/pubsub': {PubSub: PubSubMock},
-      'puppeteer': puppeteerMock,
-      'lighthouse': lighthouseMock
+      'fs': fsMock,
+      'util': {promisify: (req => req)}
     }),
     mocks: {
       config: config,
@@ -63,8 +44,7 @@ function getSample() {
       bigquery: bigqueryMock,
       PubSub: PubSubMock,
       pubsub: pubsubMock,
-      lighthouse: lighthouseMock,
-      writeFile: writeFileMock
+      fs: fsMock
     }
   };
 }
@@ -82,7 +62,6 @@ test.serial(`should fail without valid pubsub message`, async t => {
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
-  t.deepEqual(console.log.callCount, 1);
   t.deepEqual(console.log.firstCall.args, [expectedMsg]);
 });
 
@@ -92,29 +71,16 @@ test.serial(`should publish all config ids when called with 'all' message`, asyn
   const event = {
     data: Buffer.from('all').toString('base64')
   };
-  const expectedMsgs = [
-    `${sample.mocks.config.source[0].id}: Sending init PubSub message`,
-    `${sample.mocks.config.source[1].id}: Sending init PubSub message`,
-    `${sample.mocks.config.source[0].id}: Init PubSub message sent`,
-    `${sample.mocks.config.source[1].id}: Init PubSub message sent`
-  ];
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
-  t.deepEqual(console.log.callCount, 4);
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.callCount, 2);
   t.true(sample.mocks.pubsub.topic.calledWithExactly(sample.mocks.config.pubsubTopicId));
-
-  t.true(console.log.calledWith(expectedMsgs[0]));
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.firstCall.args, [Buffer.from(sample.mocks.config.source[0].id)]);
-  t.true(console.log.calledWith(expectedMsgs[2]));
-
-  t.true(console.log.calledWith(expectedMsgs[1]));
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.secondCall.args, [Buffer.from(sample.mocks.config.source[1].id)]);
-  t.true(console.log.calledWith(expectedMsgs[3]));
 });
 
-test.serial(`should launch lighthouse for id when called with id in pubsub message`, async t => {
+test.serial(`should call bigquery load for id when called with id in pubsub message`, async t => {
   // Initialize mocks
   const sample = getSample();
   const event = {
@@ -123,5 +89,6 @@ test.serial(`should launch lighthouse for id when called with id in pubsub messa
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
-  t.true(sample.mocks.lighthouse.calledWith(sample.mocks.config.source[0].url));
+  t.deepEqual(sample.mocks.fs.writeFile.callCount, 1);
+  t.deepEqual(sample.mocks.bigquery.dataset().table().load.callCount, 1);
 });
