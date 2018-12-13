@@ -207,6 +207,8 @@ exports.launchLighthouse = async (event, callback) => {
 
     const json = createJSON(res.lhr, id);
 
+    json.job_id = uuid;
+
     await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
 
     log(`${id}: BigQuery job with ID ${uuid} starting for ${url}`);

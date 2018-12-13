@@ -20,6 +20,11 @@
     "type": "STRING"
   },
   {
+    "description": "The BigQuery Job ID of the load.",
+    "name": "job_id",
+    "type": "STRING"
+  },
+  {
     "description": "The device type that was emulated for the audit.",
     "name": "emulated_as",
     "type": "STRING"
