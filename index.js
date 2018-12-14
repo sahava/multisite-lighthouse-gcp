@@ -5,12 +5,14 @@ const {promisify} = require(`util`);
 const puppeteer = require(`puppeteer`);
 const lighthouse = require(`lighthouse`);
 const uuidv1 = require(`uuid/v1`);
+const {Validator} = require(`jsonschema`);
 
 const {BigQuery} = require(`@google-cloud/bigquery`);
 const {PubSub} = require(`@google-cloud/pubsub`);
 
-const bqSchema = require(`./bigquery-schema.json`);
-const config = require(`./config.json`);
+const bqSchema = require(`./bigquery-schema`);
+const config = require(`./config`);
+const configSchema = require(`./config.schema`);
 
 // Make filesystem write work with async/await
 const writeFile = promisify(fs.writeFile);
@@ -23,6 +25,8 @@ const bigquery = new BigQuery({
 const pubsub = new PubSub({
   projectId: config.projectId
 });
+
+const validator = new Validator;
 
 const log = console.log;
 
@@ -46,6 +50,8 @@ async function launchBrowserWithLighthouse(id, url) {
       });*/
     }
   });
+
+  config.lighthouseFlags = config.lighthouseFlags || {};
 
   config.lighthouseFlags.port = (new URL(browser.wsEndpoint())).port;
 
@@ -182,26 +188,30 @@ async function sendAllPubsubMsgs(ids) {
 exports.launchLighthouse = async (event, callback) => {
   try {
 
+    // Validate config schema
+    const result = validator.validate(config, configSchema);
+    if (result.errors.length) { return console.error(result.errors); }
+
+    const source = config.source;
     const msg = Buffer.from(event.data, 'base64').toString();
-    const ids = config.source.map(obj => obj.id);
-
-    // If the Pub/Sub message is not valid
-    if (msg !== 'all' && !ids.includes(msg)) { return log('No valid message found!'); }
-
-    if (msg === 'all') { return sendAllPubsubMsgs(ids); }
-
-    const [src] = config.source.filter(obj => obj.id === msg);
-    const id = src.id;
-    const url = src.url;
-
-    log(`${id}: Received message to start with URL ${url}`);
-
+    const ids = source.map(obj => obj.id);
     const uuid = uuidv1();
     const metadata = {
       sourceFormat: 'NEWLINE_DELIMITED_JSON',
       schema: {fields: bqSchema},
       jobId: uuid
     };
+
+    // If the Pub/Sub message is not valid
+    if (msg !== 'all' && !ids.includes(msg)) { return console.error('No valid message found!'); }
+
+    if (msg === 'all') { return sendAllPubsubMsgs(ids); }
+
+    const [src] = source.filter(obj => obj.id === msg);
+    const id = src.id;
+    const url = src.url;
+
+    log(`${id}: Received message to start with URL ${url}`);
 
     const res = await launchBrowserWithLighthouse(id, url);
 

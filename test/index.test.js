@@ -3,7 +3,7 @@ const test = require(`ava`);
 const proxyquire = require(`proxyquire`).noCallThru();
 const tools = require(`@google-cloud/nodejs-repo-tools`);
 
-const mockConfig = require(`./config.test`);
+const mockConfig = require(`./config.test.json`);
 
 function getSample() {
   const config = mockConfig;
@@ -62,7 +62,7 @@ test.serial(`should fail without valid pubsub message`, async t => {
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
-  t.deepEqual(console.log.firstCall.args, [expectedMsg]);
+  t.deepEqual(console.error.firstCall.args, [expectedMsg]);
 });
 
 test.serial(`should publish all config ids when called with 'all' message`, async t => {

@@ -15,6 +15,5 @@
     "output": ["html"],
     "emulatedFormFactor": "desktop"
   },
-  "pubsubTopicId": "launch-lighthouse",
-  "chromeFlags": ["--no-sandbox"]
+  "pubsubTopicId": "launch-lighthouse"
 }

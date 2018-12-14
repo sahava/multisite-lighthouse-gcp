@@ -9,10 +9,9 @@
     }
   ],
   "projectId": "multisite-lighthouse-gcp",
-  "datasetId": "lighthouse",
   "pubsubTopicId": "launch-lighthouse",
   "lighthouseFlags": {
     "output": ["html"],
     "emulatedFormFactor": "desktop"
-  },
+  }
 }
