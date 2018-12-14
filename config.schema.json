@@ -29,7 +29,25 @@
       "type": "string"
     },
     "lighthouseFlags": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["html", "csv", "json"]
+          }
+        }
+      }
+    },
+    "gcs": {
+      "type": "object",
+      "properties": {
+        "bucketName": {
+          "type": "string"
+        }
+      },
+      "required": ["bucketName"]
     }
   },
   "required": ["source", "projectId", "datasetId", "pubsubTopicId"]

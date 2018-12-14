@@ -3,17 +3,19 @@
     {
       "url": "https://www.google.com/",
       "id": "googlesearch"
-    },
-    {
+    },{
       "url": "https://www.ebay.com/",
       "id": "ebay"
     }
   ],
-  "projectId": "gcloud-project-id",
+  "projectId": "multisite-lighthouse-gcp",
+  "pubsubTopicId": "launch-lighthouse",
   "datasetId": "lighthouse",
   "lighthouseFlags": {
-    "output": ["html"],
+    "output": ["html", "csv"],
     "emulatedFormFactor": "desktop"
   },
-  "pubsubTopicId": "launch-lighthouse"
+  "gcs": {
+    "bucketName": "lighthouse-reports"
+  }
 }

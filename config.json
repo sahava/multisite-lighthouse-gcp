@@ -10,8 +10,12 @@
   ],
   "projectId": "multisite-lighthouse-gcp",
   "pubsubTopicId": "launch-lighthouse",
+  "datasetId": "lighthouse",
   "lighthouseFlags": {
-    "output": ["html"],
+    "output": ["html", "csv"],
     "emulatedFormFactor": "desktop"
+  },
+  "gcs": {
+    "bucketName": "lighthouse-reports"
   }
 }

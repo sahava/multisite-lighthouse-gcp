@@ -9,6 +9,7 @@ const {Validator} = require(`jsonschema`);
 
 const {BigQuery} = require(`@google-cloud/bigquery`);
 const {PubSub} = require(`@google-cloud/pubsub`);
+const {Storage} = require(`@google-cloud/storage`);
 
 const bqSchema = require(`./bigquery-schema`);
 const config = require(`./config`);
@@ -17,12 +18,14 @@ const configSchema = require(`./config.schema`);
 // Make filesystem write work with async/await
 const writeFile = promisify(fs.writeFile);
 
-// Initialize new BQ and PS clients
+// Initialize new GC clients
 const bigquery = new BigQuery({
   projectId: config.projectId
 });
-
 const pubsub = new PubSub({
+  projectId: config.projectId
+});
+const storage = new Storage({
   projectId: config.projectId
 });
 
@@ -184,6 +187,39 @@ async function sendAllPubsubMsgs(ids) {
   }));
 }
 
+async function writeLogAndReportsToStorage(obj, id) {
+  const bucket = storage.bucket(config.gcs.bucketName);
+  if (config.lighthouseFlags.output) {
+    await Promise.all(config.lighthouseFlags.output.map(async (fileType, idx) => {
+      let filePath = `${id}/report_${obj.lhr.fetchTime}`;
+      let mimetype;
+      switch (fileType) {
+        case 'csv':
+          mimetype = 'text/csv';
+          filePath += '.csv';
+          break;
+        case 'json':
+          mimetype = 'application/json';
+          filePath += '.json';
+          break;
+        default:
+          filePath += '.html';
+          mimetype = 'text/html';
+      }
+      const file = bucket.file(filePath);
+      log(`${id}: Writing ${fileType} report to bucket ${config.gcs.bucketName}`);
+      return await file.save(obj.report[idx], {
+        metadata: {contentType: mimetype}
+      });
+    }));
+  }
+  const file = bucket.file(`${id}/log_${obj.lhr.fetchTime}.json`);
+  log(`${id}: Writing log to bucket ${config.gcs.bucketName}`);
+  return await file.save(JSON.stringify(obj.lhr, null, " "), {
+    metadata: {contentType: 'application/json'}
+  });
+}
+
 // The Cloud Function
 exports.launchLighthouse = async (event, callback) => {
   try {
@@ -214,6 +250,10 @@ exports.launchLighthouse = async (event, callback) => {
     log(`${id}: Received message to start with URL ${url}`);
 
     const res = await launchBrowserWithLighthouse(id, url);
+
+    if (config.gcs.bucketName) {
+      await writeLogAndReportsToStorage(res, id);
+    }
 
     const json = createJSON(res.lhr, id);
 

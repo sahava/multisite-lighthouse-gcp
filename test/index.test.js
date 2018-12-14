@@ -1,4 +1,6 @@
-'use strict';const sinon = require(`sinon`);
+'use strict';
+
+const sinon = require(`sinon`);
 const test = require(`ava`);
 const proxyquire = require(`proxyquire`).noCallThru();
 const tools = require(`@google-cloud/nodejs-repo-tools`);
@@ -27,6 +29,16 @@ function getSample() {
     topic: sinon.stub().returns(topicMock)
   };
   const PubSubMock = sinon.stub().returns(pubsubMock);
+  const fileMock = {
+    save: sinon.stub().returns(Promise.resolve())
+  };
+  const bucketMock = {
+    file: sinon.stub().returns(fileMock)
+  };
+  const storageMock = {
+    bucket: sinon.stub().returns(bucketMock)
+  };
+  const StorageMock = sinon.stub().returns(storageMock);
   const fsMock = {
     writeFile: sinon.stub().returns(Promise.resolve())
   }                                                   ;
@@ -35,6 +47,7 @@ function getSample() {
       './config.json': config,
       '@google-cloud/bigquery': {BigQuery: BigQueryMock},
       '@google-cloud/pubsub': {PubSub: PubSubMock},
+      '@google-cloud/storage': {Storage: StorageMock},
       'fs': fsMock,
       'util': {promisify: (req => req)}
     }),
@@ -44,6 +57,8 @@ function getSample() {
       bigquery: bigqueryMock,
       PubSub: PubSubMock,
       pubsub: pubsubMock,
+      Storage: StorageMock,
+      storage: storageMock,
       fs: fsMock
     }
   };
@@ -89,6 +104,7 @@ test.serial(`should call bigquery load for id when called with id in pubsub mess
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
+  t.deepEqual(sample.mocks.storage.bucket().file().save.callCount, 3);
   t.deepEqual(sample.mocks.fs.writeFile.callCount, 1);
   t.deepEqual(sample.mocks.bigquery.dataset().table().load.callCount, 1);
 });
