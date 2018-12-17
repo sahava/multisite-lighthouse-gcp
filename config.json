@@ -11,11 +11,12 @@
   "projectId": "multisite-lighthouse-gcp",
   "pubsubTopicId": "launch-lighthouse",
   "datasetId": "lighthouse",
+  "minTimeBetweenTriggers": 60000,
+  "gcs": {
+    "bucketName": "lighthouse-reports"
+  },
   "lighthouseFlags": {
     "output": ["html", "csv"],
     "emulatedFormFactor": "desktop"
-  },
-  "gcs": {
-    "bucketName": "lighthouse-reports"
   }
 }

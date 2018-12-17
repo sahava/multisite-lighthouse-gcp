@@ -4,3 +4,5 @@ node_modules
 package-lock.json
 .DS_STORE
 secret
+.nyc_output
+coverage

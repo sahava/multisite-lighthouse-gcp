@@ -17,6 +17,7 @@ const configSchema = require(`./config.schema`);
 
 // Make filesystem write work with async/await
 const writeFile = promisify(fs.writeFile);
+const readFile = promisify(fs.readFile);
 
 // Initialize new GC clients
 const bigquery = new BigQuery({
@@ -40,19 +41,6 @@ async function launchBrowserWithLighthouse(id, url) {
   const browser = await puppeteer.launch({args: ['--no-sandbox']});
 
   log(`${id}: Browser started for ${url}`);
-
-  browser.on('targetchanged', async target => {
-    const page = await target.page();
-
-    if (page && page.url() === url) {
-      /*Do something with network conditions
-      
-      const client = await page.target().createCDPSession();
-      await client.send('Runtime.evaluate', {
-        expression: `(${addStyleContent.toString()})('${css}')`
-      });*/
-    }
-  });
 
   config.lighthouseFlags = config.lighthouseFlags || {};
 
@@ -220,13 +208,35 @@ async function writeLogAndReportsToStorage(obj, id) {
   });
 }
 
-// The Cloud Function
-exports.launchLighthouse = async (event, callback) => {
+async function checkEventState(id, timeNow) {
+  let eventStates = {};
   try {
+    // Try to load existing state file from storage
+    const destination = '/tmp/states.json';
+    await storage
+      .bucket(config.gcs.bucketName)
+      .file('states.json')
+      .download({destination: destination});
+    eventStates = JSON.parse(await readFile(destination));
+  } catch(e) {}
 
-    // Validate config schema
-    const result = validator.validate(config, configSchema);
-    if (result.errors.length) { return console.error(result.errors); }
+  // Check if event corresponding to id has been triggered less than the timeout ago
+  const delta = eventStates[id] ? timeNow - eventStates[id].created : null;
+  if (delta && delta < config.minTimeBetweenTriggers) {
+    return {active: true, delta: Math.round(delta/1000)}
+  }
+
+  // Otherwise write the state of the event with current timestamp and save to bucket
+  eventStates[id] = {created: timeNow};
+  await storage.bucket(config.gcs.bucketName).file('states.json').save(JSON.stringify(eventStates, null, " "), {
+    metadata: {contentType: 'application/json'}
+  });
+  return {active: false}
+}
+
+// The Cloud Function
+async function launchLighthouse (event, callback) {
+  try {
 
     const source = config.source;
     const msg = Buffer.from(event.data, 'base64').toString();
@@ -248,6 +258,12 @@ exports.launchLighthouse = async (event, callback) => {
     const url = src.url;
 
     log(`${id}: Received message to start with URL ${url}`);
+
+    const timeNow = new Date().getTime();
+    const eventState = await checkEventState(id, timeNow);
+    if (eventState.active) {
+      return log(`${id}: Found active event (${Math.round(eventState.delta)}s < ${Math.round(config.minTimeBetweenTriggers/1000)}s), aborting...`);
+    }
 
     const res = await launchBrowserWithLighthouse(id, url);
 
@@ -271,4 +287,29 @@ exports.launchLighthouse = async (event, callback) => {
   } catch(e) {
     console.error(e);
   }
-};
+}
+
+function init() {
+  // Validate config schema
+  const result = validator.validate(config, configSchema);
+  if (result.errors.length) {
+    throw new Error(`Error(s) in configuration file: ${JSON.stringify(result.errors, null, " ")}`);
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  init();
+} else {
+  // For testing
+  module.exports = {
+    _init: init,
+    _writeLogAndReportsToStorage: writeLogAndReportsToStorage,
+    _sendAllPubSubMsgs: sendAllPubsubMsgs,
+    _toNdJson: toNdjson,
+    _createJSON: createJSON,
+    _launchBrowserWithLighthouse: launchBrowserWithLighthouse,
+    _checkEventState: checkEventState
+  }
+}
+
+module.exports.launchLighthouse = launchLighthouse;

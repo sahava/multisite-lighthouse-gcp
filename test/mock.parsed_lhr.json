@@ -1,0 +1,109 @@
+{
+ "fetch_time": "2018-12-17T11:17:09.656Z",
+ "site_url": "https://www.google.com/",
+ "site_id": "googlesearch",
+ "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/72.0.3617.0 Safari/537.36",
+ "emulated_as": "desktop",
+ "accessibility": [
+  {
+   "total_score": 0.93,
+   "bypass_repetitive_content": true,
+   "color_contrast": false,
+   "document_title_found": true,
+   "no_duplicate_id_attribute": true,
+   "html_has_lang_attribute": true,
+   "html_lang_is_valid": true,
+   "images_have_alt_attribute": true,
+   "form_elements_have_labels": true,
+   "links_have_names": true,
+   "lists_are_well_formed": false,
+   "list_items_within_proper_parents": false,
+   "meta_viewport_allows_zoom": false
+  }
+ ],
+ "best_practices": [
+  {
+   "total_score": 0.93,
+   "avoid_application_cache": true,
+   "no_web_sql": true,
+   "uses_https": true,
+   "uses_http2": true,
+   "uses_passive_event_listeners": false,
+   "no_document_write": true,
+   "external_anchors_use_rel_noopener": true,
+   "no_geolocation_on_start": true,
+   "doctype_defined": true,
+   "no_vulnerable_libraries": true,
+   "notification_asked_on_start": true,
+   "avoid_deprecated_apis": true,
+   "allow_paste_to_password_field": true,
+   "errors_in_console": true,
+   "images_have_correct_aspect_ratio": true
+  }
+ ],
+ "performance": [
+  {
+   "total_score": 0.95,
+   "first_contentful_paint": [
+    {
+     "raw_value": 1115.418,
+     "score": 1
+    }
+   ],
+   "first_meaningful_paint": [
+    {
+     "raw_value": 1168.918,
+     "score": 1
+    }
+   ],
+   "speed_index": [
+    {
+     "raw_value": 1156.8301730025828,
+     "score": 1
+    }
+   ],
+   "page_interactive": [
+    {
+     "raw_value": 3957.139,
+     "score": 0.88
+    }
+   ],
+   "first_cpu_idle": [
+    {
+     "raw_value": 3472.6,
+     "score": 0.91
+    }
+   ]
+  }
+ ],
+ "pwa": [
+  {
+   "total_score": 0.48,
+   "load_fast_enough": true,
+   "works_offline": false,
+   "webapp_install_banner": false,
+   "uses_https": true,
+   "redirects_http_to_https": true,
+   "has_meta_viewport": false,
+   "uses_service_worker": false,
+   "works_without_javascript": true,
+   "splash_screen_found": false,
+   "themed_address_bar": false
+  }
+ ],
+ "seo": [
+  {
+   "total_score": 0.7,
+   "has_meta_viewport": false,
+   "document_title_found": true,
+   "meta_description": false,
+   "http_status_code": true,
+   "descriptive_link_text": true,
+   "is_crawlable": true,
+   "robots_txt_valid": true,
+   "hreflang_valid": true,
+   "font_size_ok": false,
+   "plugins_ok": true
+  }
+ ]
+}

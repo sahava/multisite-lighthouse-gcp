@@ -61,7 +61,14 @@ test.serial(`should fail with invalid lighthouseflags value`, async t => {
   t.deepEqual(console.error.firstCall.args[0].message, 'is not of a type(s) object');
 });
 
-test.serial(`should fail if gcs without bucketName`, async t => {
+test.serial(`should fail without minTimeBetweenTriggers`, async t => {
+  delete config.minTimeBetweenTriggers;
+  const validator = new Validator;
+  console.error(validator.validate(config, configSchema).errors[0]);
+  t.deepEqual(console.error.firstCall.args[0].message, 'requires property "minTimeBetweenTriggers"');
+});
+
+test.serial(`should fail without gcs.bucketName`, async t => {
   config.gcs = {wrongProperty: 'test'};
   const validator = new Validator;
   console.error(validator.validate(config, configSchema).errors[0]);

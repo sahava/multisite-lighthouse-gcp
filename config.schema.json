@@ -28,6 +28,9 @@
     "pubsubTopicId": {
       "type": "string"
     },
+    "minTimeBetweenTriggers": {
+      "type": "number"
+    },
     "lighthouseFlags": {
       "type": "object",
       "properties": {
@@ -50,5 +53,5 @@
       "required": ["bucketName"]
     }
   },
-  "required": ["source", "projectId", "datasetId", "pubsubTopicId"]
+  "required": ["source", "projectId", "datasetId", "pubsubTopicId", "minTimeBetweenTriggers", "gcs"]
 }
