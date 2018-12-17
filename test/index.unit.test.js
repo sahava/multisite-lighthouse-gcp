@@ -5,11 +5,12 @@ const test = require(`ava`);
 const proxyquire = require(`proxyquire`).noCallThru();
 const tools = require(`@google-cloud/nodejs-repo-tools`);
 const mockLhr = require(`./mock.lhr`);
+const fn = require(`../`);
 
 const mockConfig = require(`./config.test.json`);
 let config;
 
-function getSample() {
+function getSample(options) {
   const tableMock = {
     load: sinon.stub().returns(Promise.resolve())
   };
@@ -31,7 +32,8 @@ function getSample() {
   };
   const PubSubMock = sinon.stub().returns(pubsubMock);
   const fileMock = {
-    save: sinon.stub().returns(Promise.resolve())
+    save: sinon.stub().returns(Promise.resolve()),
+    download: sinon.stub().returns(Promise.resolve())
   };
   const bucketMock = {
     file: sinon.stub().returns(fileMock)
@@ -41,7 +43,12 @@ function getSample() {
   };
   const StorageMock = sinon.stub().returns(storageMock);
   const fsMock = {
-    writeFile: sinon.stub().returns(Promise.resolve())
+    writeFile: sinon.stub().returns(Promise.resolve()),
+    readFile: sinon.stub().returns(Promise.resolve(JSON.stringify({
+      googlesearch: {
+        created: options && options.eventTriggerActive ? new Date().getTime() : new Date().getTime() - 60000
+      }
+    })))
   };
   const browserMock = {
     close: sinon.stub().returns(Promise.resolve()),
@@ -165,7 +172,55 @@ test.serial(`should trigger pubsub for all config ids`, async t => {
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.secondCall.args, [Buffer.from(sample.mocks.config.source[1].id)]);
 });
 
-test.serial(`should write object reports and log to gcs bucket`, async t => {
+test.serial(`should return active state if trigger fired < 60s ago`, async t => {
+  // Initialize mocks
+  const sample = getSample();
+  const expected = {active: true, delta: 10};
+
+  // Call function and verify behavior
+  const result = await sample.program._checkEventState('googlesearch', new Date().getTime() - 50000);
+  t.deepEqual(result, expected);
+});
+
+test.serial(`should return inactive state if trigger fired >= 60s ago`, async t => {
+  // Initialize mocks
+  const sample = getSample();
+  const expected = {active: false};
+
+  // Call function and verify behavior
+  const result = await sample.program._checkEventState('googlesearch', new Date().getTime());
+  t.deepEqual(result, expected);
+});
+
+test.serial(`should abort main function if trigger fired < 60s ago`, async t => {
+  // Initialize mocks
+  const sample = getSample({eventTriggerActive: true});
+  const event = {
+    data: Buffer.from('googlesearch').toString('base64')
+  };
+
+  // Call function and verify behavior
+  await sample.program.launchLighthouse(event);
+  t.true(console.log.calledWith(`googlesearch: Found active event (0s < 60s), aborting...`));
+});
+
+test.serial(`should write only object log to gcs bucket if output not defined`, async t => {
+  // Initialize mocks
+  const sample = getSample();
+  delete config.lighthouseFlags.output;
+  const mockObj = {
+    lhr: {fetchTime: "2018-12-17T10:56:56.420Z"}
+  };
+  const id = 'ebay';
+
+  // Call function and verify behavior
+  await sample.program._writeLogAndReportsToStorage(mockObj, id);
+  t.true(sample.mocks.storage.bucket.calledWith('lighthouse-reports'));
+  t.true(sample.mocks.storage.bucket().file.calledWith(`${id}/log_${mockObj.lhr.fetchTime}.json`));
+  t.deepEqual(sample.mocks.storage.bucket().file().save.firstCall.args, [JSON.stringify(mockObj.lhr, null, " "), {metadata: {contentType: 'application/json'}}]);
+});
+
+test.serial(`should write object reports and log to gcs bucket if output defined`, async t => {
   // Initialize mocks
   const sample = getSample();
   const mockObj = {
@@ -187,8 +242,35 @@ test.serial(`should write object reports and log to gcs bucket`, async t => {
   t.deepEqual(sample.mocks.storage.bucket().file().save.lastCall.args, [JSON.stringify(mockObj.lhr, null, " "), {metadata: {contentType: 'application/json'}}]);
 });
 
-test.serial(`should call bigquery load for id when called with id in pubsub message`, async t => {
+test.serial(`should fire all pubsub triggers with 'all' message`, async t => {
   // Initialize mocks
+  const sample = getSample();
+  const event = {
+    data: Buffer.from('all').toString('base64')
+  };
+
+  // Call function and verify behavior
+  await sample.program.launchLighthouse(event);
+  t.true(sample.mocks.pubsub.topic().publisher().publish.calledWith(Buffer.from('googlesearch')));
+  t.true(sample.mocks.pubsub.topic().publisher().publish.calledWith(Buffer.from('ebay')));
+});
+
+test.serial(`should catch error`, async t => {
+  // Initialize mocks
+  const sample = getSample();
+  delete config.source;
+  const event = {
+    data: Buffer.from('all').toString('base64')
+  };
+
+  // Call function and verify behavior
+  await sample.program.launchLighthouse(event);
+  t.deepEqual(console.error.firstCall.args, [new TypeError('Cannot read property \'map\' of undefined')]);
+});
+
+test.serial(`should call bigquery load for id when called with id in pubsub message`, async t => {
+  // Initialize mocks, test live environment
+  process.env.NODE_ENV = 'live';
   const sample = getSample();
   const event = {
     data: Buffer.from(sample.mocks.config.source[0].id).toString('base64')

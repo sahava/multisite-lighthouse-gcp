@@ -177,30 +177,29 @@ async function sendAllPubsubMsgs(ids) {
 
 async function writeLogAndReportsToStorage(obj, id) {
   const bucket = storage.bucket(config.gcs.bucketName);
-  if (config.lighthouseFlags.output) {
-    await Promise.all(config.lighthouseFlags.output.map(async (fileType, idx) => {
-      let filePath = `${id}/report_${obj.lhr.fetchTime}`;
-      let mimetype;
-      switch (fileType) {
-        case 'csv':
-          mimetype = 'text/csv';
-          filePath += '.csv';
-          break;
-        case 'json':
-          mimetype = 'application/json';
-          filePath += '.json';
-          break;
-        default:
-          filePath += '.html';
-          mimetype = 'text/html';
-      }
-      const file = bucket.file(filePath);
-      log(`${id}: Writing ${fileType} report to bucket ${config.gcs.bucketName}`);
-      return await file.save(obj.report[idx], {
-        metadata: {contentType: mimetype}
-      });
-    }));
-  }
+  config.lighthouseFlags.output = config.lighthouseFlags.output || [];
+  await Promise.all(config.lighthouseFlags.output.map(async (fileType, idx) => {
+    let filePath = `${id}/report_${obj.lhr.fetchTime}`;
+    let mimetype;
+    switch (fileType) {
+      case 'csv':
+        mimetype = 'text/csv';
+        filePath += '.csv';
+        break;
+      case 'json':
+        mimetype = 'application/json';
+        filePath += '.json';
+        break;
+      default:
+        filePath += '.html';
+        mimetype = 'text/html';
+    }
+    const file = bucket.file(filePath);
+    log(`${id}: Writing ${fileType} report to bucket ${config.gcs.bucketName}`);
+    return await file.save(obj.report[idx], {
+      metadata: {contentType: mimetype}
+    });
+  }));
   const file = bucket.file(`${id}/log_${obj.lhr.fetchTime}.json`);
   log(`${id}: Writing log to bucket ${config.gcs.bucketName}`);
   return await file.save(JSON.stringify(obj.lhr, null, " "), {
@@ -221,7 +220,7 @@ async function checkEventState(id, timeNow) {
   } catch(e) {}
 
   // Check if event corresponding to id has been triggered less than the timeout ago
-  const delta = eventStates[id] ? timeNow - eventStates[id].created : null;
+  const delta = id in eventStates && (timeNow - eventStates[id].created);
   if (delta && delta < config.minTimeBetweenTriggers) {
     return {active: true, delta: Math.round(delta/1000)}
   }
@@ -267,10 +266,8 @@ async function launchLighthouse (event, callback) {
 
     const res = await launchBrowserWithLighthouse(id, url);
 
-    if (config.gcs.bucketName) {
-      await writeLogAndReportsToStorage(res, id);
-    }
-
+    await writeLogAndReportsToStorage(res, id);
+    
     const json = createJSON(res.lhr, id);
 
     json.job_id = uuid;
@@ -294,6 +291,8 @@ function init() {
   const result = validator.validate(config, configSchema);
   if (result.errors.length) {
     throw new Error(`Error(s) in configuration file: ${JSON.stringify(result.errors, null, " ")}`);
+  } else {
+    log(`Configuration validated successfully`);
   }
 }
 
