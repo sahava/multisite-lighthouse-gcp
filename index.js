@@ -1,3 +1,26 @@
+/**
+ * MIT License
+ *
+ * Copyright (c) 2018 Simo Ahava
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 const {URL} = require(`url`);
 const fs = require(`fs`);
 const {promisify} = require(`util`);
@@ -34,6 +57,13 @@ const validator = new Validator;
 
 const log = console.log;
 
+/**
+ * Function that runs lighthouse in a headless browser instance.
+ *
+ * @param {string} id ID of the source for logging purposes.
+ * @param {string} url URL to audit.
+ * @returns {Promise<object>} The object containing the lighthouse report.
+ */
 async function launchBrowserWithLighthouse(id, url) {
 
   log(`${id}: Starting browser for ${url}`);
@@ -59,7 +89,13 @@ async function launchBrowserWithLighthouse(id, url) {
   return lhr;
 }
 
-// Parse the Lighthouse response and convert it to the BQ schema format
+/**
+ * Parse the Lighthouse report into an object format corresponding to the BigQuery schema.
+ *
+ * @param {object} obj The lhr object.
+ * @param {string} id ID of the source.
+ * @returns {object} The parsed lhr object corresponding to the BigQuery schema.
+ */
 function createJSON(obj, id) {
   return {
     fetch_time: obj.fetchTime,
@@ -152,7 +188,12 @@ function createJSON(obj, id) {
   }
 }
 
-// Convert object to newline-delimited JSON
+/**
+ * Converts input object to newline-delimited JSON
+ *
+ * @param {object} data Object to convert.
+ * @returns {string} The stringified object.
+ */
 function toNdjson(data) {
   data = Array.isArray(data) ? data : [data];
   let outNdjson = '';
@@ -162,7 +203,12 @@ function toNdjson(data) {
   return outNdjson;
 }
 
-// Send all ids in config.json as new Pub/Sub messages
+/**
+ * Publishes a message to the Pub/Sub topic for every ID in config.json source object.
+ *
+ * @param {array<string>} ids Array of ids to publish into Pub/Sub.
+ * @returns {Promise<any[]>} Resolved promise when all IDs have been published.
+ */
 async function sendAllPubsubMsgs(ids) {
   return await Promise.all(ids.map(async (id) => {
     const msg = Buffer.from(id);
@@ -175,6 +221,13 @@ async function sendAllPubsubMsgs(ids) {
   }));
 }
 
+/**
+ * Write the lhr log object and reports to GCS. Only write reports if lighthouseFlags.output is defined in config.json.
+ *
+ * @param {object} obj The lighthouse audit object.
+ * @param {string} id ID of the source.
+ * @returns {Promise<void>} Resolved promise when all write operations are complete.
+ */
 async function writeLogAndReportsToStorage(obj, id) {
   const bucket = storage.bucket(config.gcs.bucketName);
   config.lighthouseFlags.output = config.lighthouseFlags.output || [];
@@ -207,6 +260,14 @@ async function writeLogAndReportsToStorage(obj, id) {
   });
 }
 
+/**
+ * Check events in GCS states.json to see if an event with given ID has been pushed to Pub/Sub less than
+ * minTimeBetweenTriggers (in config.json) ago.
+ *
+ * @param {string} id ID of the source (and the Pub/Sub message).
+ * @param {number} timeNow Timestamp when this method was invoked.
+ * @returns {Promise<object>} Object describing active state and time delta between invocation and when the state entry was created, if necessary.
+ */
 async function checkEventState(id, timeNow) {
   let eventStates = {};
   try {
@@ -233,7 +294,13 @@ async function checkEventState(id, timeNow) {
   return {active: false}
 }
 
-// The Cloud Function
+/**
+ * The Cloud Function. Triggers on a Pub/Sub trigger, audits the URLs in config.json, writes the result in GCS and loads the data into BigQuery.
+ *
+ * @param {object} event Trigger object.
+ * @param {function} callback Callback function (not provided).
+ * @returns {Promise<*>} Promise when BigQuery load starts.
+ */
 async function launchLighthouse (event, callback) {
   try {
 
@@ -267,7 +334,7 @@ async function launchLighthouse (event, callback) {
     const res = await launchBrowserWithLighthouse(id, url);
 
     await writeLogAndReportsToStorage(res, id);
-    
+
     const json = createJSON(res.lhr, id);
 
     json.job_id = uuid;
@@ -286,6 +353,9 @@ async function launchLighthouse (event, callback) {
   }
 }
 
+/**
+ * Initialization function - only run when Cloud Function is deployed and/or a new instance is started. Validates the configuration file against its schema.
+ */
 function init() {
   // Validate config schema
   const result = validator.validate(config, configSchema);

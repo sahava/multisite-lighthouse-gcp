@@ -1,3 +1,27 @@
+/**
+ * MIT License
+ *
+ * Copyright (c) 2018 Simo Ahava
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 'use strict';
 
 const sinon = require(`sinon`);
@@ -146,7 +170,14 @@ test.serial(`should launch puppeteer and lighthouse without lighthouseFlags`, as
 
   // Call function and verify behavior
   await sample.program._launchBrowserWithLighthouse(id, url);
-  t.deepEqual(console.log.firstCall.args, [`${id}: Starting browser for ${url}`]);
+  t.deepEqual(console.log.callCount, 5);
+  t.deepEqual(console.log.args, [
+    [`${id}: Starting browser for ${url}`],
+    [`${id}: Browser started for ${url}`],
+    [`${id}: Starting lighthouse for ${url}`],
+    [`${id}: Lighthouse done for ${url}`],
+    [`${id}: Browser closed for ${url}`]
+  ]);
 });
 
 test.serial(`should launch puppeteer and lighthouse with lighthouseFlags`, async t => {
@@ -157,19 +188,34 @@ test.serial(`should launch puppeteer and lighthouse with lighthouseFlags`, async
 
   // Call function and verify behavior
   await sample.program._launchBrowserWithLighthouse(id, url);
-  t.deepEqual(console.log.firstCall.args, [`${id}: Starting browser for ${url}`]);
+  t.deepEqual(console.log.callCount, 5);
+  t.deepEqual(console.log.args, [
+    [`${id}: Starting browser for ${url}`],
+    [`${id}: Browser started for ${url}`],
+    [`${id}: Starting lighthouse for ${url}`],
+    [`${id}: Lighthouse done for ${url}`],
+    [`${id}: Browser closed for ${url}`]
+  ]);
 });
 
 test.serial(`should trigger pubsub for all config ids`, async t => {
   // Initialize mocks
   const sample = getSample();
+  const ids = sample.mocks.config.source.map(obj => obj.id);
 
   // Call function and verify behavior
-  await sample.program._sendAllPubSubMsgs(sample.mocks.config.source.map(obj => obj.id));
-  t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.callCount, 2);
+  await sample.program._sendAllPubSubMsgs(ids);
+  t.deepEqual(console.log.callCount, 4);
   t.true(sample.mocks.pubsub.topic.calledWithExactly(sample.mocks.config.pubsubTopicId));
+  t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.callCount, 2);
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.firstCall.args, [Buffer.from(sample.mocks.config.source[0].id)]);
   t.deepEqual(sample.mocks.pubsub.topic().publisher().publish.secondCall.args, [Buffer.from(sample.mocks.config.source[1].id)]);
+  t.deepEqual(console.log.args, [
+    [`${ids[0]}: Sending init PubSub message`],
+    [`${ids[1]}: Sending init PubSub message`],
+    [`${ids[0]}: Init PubSub message sent`],
+    [`${ids[1]}: Init PubSub message sent`]
+  ]);
 });
 
 test.serial(`should return active state if trigger fired < 60s ago`, async t => {
@@ -215,6 +261,7 @@ test.serial(`should write only object log to gcs bucket if output not defined`, 
 
   // Call function and verify behavior
   await sample.program._writeLogAndReportsToStorage(mockObj, id);
+  t.deepEqual(sample.mocks.storage.bucket().file().save.callCount, 1);
   t.true(sample.mocks.storage.bucket.calledWith('lighthouse-reports'));
   t.true(sample.mocks.storage.bucket().file.calledWith(`${id}/log_${mockObj.lhr.fetchTime}.json`));
   t.deepEqual(sample.mocks.storage.bucket().file().save.firstCall.args, [JSON.stringify(mockObj.lhr, null, " "), {metadata: {contentType: 'application/json'}}]);
@@ -231,6 +278,7 @@ test.serial(`should write object reports and log to gcs bucket if output defined
 
   // Call function and verify behavior
   await sample.program._writeLogAndReportsToStorage(mockObj, id);
+  t.deepEqual(sample.mocks.storage.bucket().file().save.callCount, 4);
   t.true(sample.mocks.storage.bucket.calledWith('lighthouse-reports'));
   t.true(sample.mocks.storage.bucket().file.calledWith(`${id}/report_${mockObj.lhr.fetchTime}.html`));
   t.deepEqual(sample.mocks.storage.bucket().file().save.firstCall.args, ['report1', {metadata: {contentType: 'text/html'}}]);
