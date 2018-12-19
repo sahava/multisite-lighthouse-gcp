@@ -70,7 +70,7 @@ function getSample(options) {
     writeFile: sinon.stub().returns(Promise.resolve()),
     readFile: sinon.stub().returns(Promise.resolve(JSON.stringify({
       googlesearch: {
-        created: options && options.eventTriggerActive ? new Date().getTime() : new Date().getTime() - 60000
+        created: options && options.eventTriggerActive ? new Date().getTime() : new Date().getTime() - mockConfig.minTimeBetweenTriggers
       }
     })))
   };
@@ -218,17 +218,17 @@ test.serial(`should trigger pubsub for all config ids`, async t => {
   ]);
 });
 
-test.serial(`should return active state if trigger fired < 60s ago`, async t => {
+test.serial(`should return active state if trigger fired < ${mockConfig.minTimeBetweenTriggers/1000}s ago`, async t => {
   // Initialize mocks
   const sample = getSample();
   const expected = {active: true, delta: 10};
 
   // Call function and verify behavior
-  const result = await sample.program._checkEventState('googlesearch', new Date().getTime() - 50000);
+  const result = await sample.program._checkEventState('googlesearch', new Date().getTime() - mockConfig.minTimeBetweenTriggers + 10000);
   t.deepEqual(result, expected);
 });
 
-test.serial(`should return inactive state if trigger fired >= 60s ago`, async t => {
+test.serial(`should return inactive state if trigger fired >= ${mockConfig.minTimeBetweenTriggers/1000}s ago`, async t => {
   // Initialize mocks
   const sample = getSample();
   const expected = {active: false};
@@ -238,7 +238,7 @@ test.serial(`should return inactive state if trigger fired >= 60s ago`, async t 
   t.deepEqual(result, expected);
 });
 
-test.serial(`should abort main function if trigger fired < 60s ago`, async t => {
+test.serial(`should abort main function if trigger fired < ${mockConfig.minTimeBetweenTriggers/1000}s ago`, async t => {
   // Initialize mocks
   const sample = getSample({eventTriggerActive: true});
   const event = {
@@ -247,7 +247,7 @@ test.serial(`should abort main function if trigger fired < 60s ago`, async t => 
 
   // Call function and verify behavior
   await sample.program.launchLighthouse(event);
-  t.true(console.log.calledWith(`googlesearch: Found active event (0s < 60s), aborting...`));
+  t.true(console.log.calledWith(`googlesearch: Found active event (0s < ${mockConfig.minTimeBetweenTriggers/1000}s), aborting...`));
 });
 
 test.serial(`should write only object log to gcs bucket if output not defined`, async t => {

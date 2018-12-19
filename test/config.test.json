@@ -11,7 +11,7 @@
   "projectId": "multisite-lighthouse-gcp",
   "pubsubTopicId": "launch-lighthouse",
   "datasetId": "lighthouse",
-  "minTimeBetweenTriggers": 60000,
+  "minTimeBetweenTriggers": 300000,
   "lighthouseFlags": {
     "output": ["html", "csv", "json"],
     "emulatedFormFactor": "desktop"
