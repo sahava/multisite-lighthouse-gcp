@@ -272,10 +272,10 @@ async function checkEventState(id, timeNow) {
   let eventStates = {};
   try {
     // Try to load existing state file from storage
-    const destination = '/tmp/states.json';
+    const destination = `/tmp/state_${id}.json`;
     await storage
       .bucket(config.gcs.bucketName)
-      .file('states.json')
+      .file(`${id}/state.json`)
       .download({destination: destination});
     eventStates = JSON.parse(await readFile(destination));
   } catch(e) {}
@@ -288,7 +288,7 @@ async function checkEventState(id, timeNow) {
 
   // Otherwise write the state of the event with current timestamp and save to bucket
   eventStates[id] = {created: timeNow};
-  await storage.bucket(config.gcs.bucketName).file('states.json').save(JSON.stringify(eventStates, null, " "), {
+  await storage.bucket(config.gcs.bucketName).file(`${id}/state.json`).save(JSON.stringify(eventStates, null, " "), {
     metadata: {contentType: 'application/json'}
   });
   return {active: false}
