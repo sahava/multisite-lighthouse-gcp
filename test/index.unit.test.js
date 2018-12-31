@@ -28,8 +28,7 @@ const sinon = require(`sinon`);
 const test = require(`ava`);
 const proxyquire = require(`proxyquire`).noCallThru();
 const tools = require(`@google-cloud/nodejs-repo-tools`);
-const mockLhr = require(`./mock.lhr`);
-const fn = require(`../`);
+const mockLhr = require(`./mock.lhr.json`);
 
 const mockConfig = require(`./config.test.json`);
 let config;

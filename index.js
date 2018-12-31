@@ -34,9 +34,9 @@ const {BigQuery} = require(`@google-cloud/bigquery`);
 const {PubSub} = require(`@google-cloud/pubsub`);
 const {Storage} = require(`@google-cloud/storage`);
 
-const bqSchema = require(`./bigquery-schema`);
-const config = require(`./config`);
-const configSchema = require(`./config.schema`);
+const bqSchema = require(`./bigquery-schema.json`);
+const config = require(`./config.json`);
+const configSchema = require(`./config.schema.json`);
 
 // Make filesystem write work with async/await
 const writeFile = promisify(fs.writeFile);
