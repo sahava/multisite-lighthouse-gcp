@@ -118,11 +118,6 @@
         "type": "BOOLEAN"
       },
       {
-        "description": "Web SQL is deprecated. Consider using IndexedDB instead. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/web-sql).",
-        "name": "no_web_sql",
-        "type": "BOOLEAN"
-      },
-      {
         "description": "All sites should be protected with HTTPS, even ones that don't handle sensitive data. HTTPS prevents intruders from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite for HTTP/2 and many new web platform APIs. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/https).",
         "name": "uses_https",
         "type": "BOOLEAN"
@@ -304,7 +299,7 @@
       },
       {
         "description": "Browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/install-prompt).",
-        "name": "webapp_install_banner",
+        "name": "installable_manifest",
         "type": "BOOLEAN"
       },
       {

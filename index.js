@@ -121,7 +121,6 @@ function createJSON(obj, id) {
     best_practices: [{
       total_score: obj.categories['best-practices'].score,
       avoid_application_cache: obj.audits['appcache-manifest'].score === 1,
-      no_web_sql: obj.audits['no-websql'].score === 1,
       uses_https: obj.audits['is-on-https'].score === 1,
       uses_http2: obj.audits['uses-http2'].score === 1,
       uses_passive_event_listeners: obj.audits['uses-passive-event-listeners'].score === 1,
@@ -163,7 +162,7 @@ function createJSON(obj, id) {
       total_score: obj.categories.pwa.score,
       load_fast_enough: obj.audits['load-fast-enough-for-pwa'].score === 1,
       works_offline: obj.audits['works-offline'].score === 1,
-      webapp_install_banner: obj.audits['webapp-install-banner'].score === 1,
+      installable_manifest: obj.audits['installable-manifest'].score === 1,
       uses_https: obj.audits['is-on-https'].score === 1,
       redirects_http_to_https: obj.audits['redirects-http'].score === 1,
       has_meta_viewport: obj.audits.viewport.score === 1,
@@ -334,7 +333,6 @@ async function launchLighthouse (event, callback) {
     const res = await launchBrowserWithLighthouse(id, url);
 
     await writeLogAndReportsToStorage(res, id);
-
     const json = createJSON(res.lhr, id);
 
     json.job_id = uuid;
