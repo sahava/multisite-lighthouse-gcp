@@ -1,0 +1,25 @@
+{
+  "source": [
+    {
+      "url": "https://www.yoigo.com/",
+      "id": "home"
+    },{
+      "url": "https://www.yoigo.com/fibra-optica",
+      "id": "TARIFAS FIBRA Y MÓVIL"
+    },{
+      "url": "https://www.yoigo.com/telefonos-moviles/alcatel",
+      "id": "Móviles Alcatel"
+    }
+  ],
+  "projectId": "mmdh-dev",
+  "pubsubTopicId": "launch-lighthouse",
+  "datasetId": "lighthouse",
+  "minTimeBetweenTriggers": 290000,
+  "gcs": {
+    "bucketName": "yoigo-lighthouse-reports-test"
+  },
+  "lighthouseFlags": {
+    "output": ["html", "json"],
+    "emulatedFormFactor": "desktop"
+  }
+}
