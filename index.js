@@ -69,7 +69,7 @@ const thirdPartyIncluded = '3PIncluded';
  * @param {string} url URL to audit.
  * @returns {Promise<object>} The object containing the lighthouse report.
  */
-async function launchBrowserWithLighthouse(id, url) {
+async function launchBrowserWithLighthouse(id, url, lighthouseFlags) {
 
   log(`${id}: Starting browser for ${url}`);
 
@@ -77,13 +77,15 @@ async function launchBrowserWithLighthouse(id, url) {
 
   log(`${id}: Browser started for ${url}`);
 
-  config.lighthouseFlags = config.lighthouseFlags || {};
+  lighthouseFlags = lighthouseFlags || {};
 
-  config.lighthouseFlags.port = (new URL(browser.wsEndpoint())).port;
+  lighthouseFlags.port = (new URL(browser.wsEndpoint())).port;
 
   log(`${id}: Starting lighthouse for ${url}`);
 
-  const lhr = await lighthouse(url, config.lighthouseFlags);
+  log(lighthouseFlags);
+
+  const lhr = await lighthouse(url, lighthouseFlags);
 
   log(`${id}: Lighthouse done for ${url}`);
 
@@ -349,11 +351,12 @@ async function launchLighthouse (event, callback) {
     const msg = Buffer.from(event.data, 'base64').toString();
     const msgParts = msg.split(separator);
     const idMsg = msgParts[0];
-    if (msgParts[1] && msgParts[1] == thirdPartyBlocked) {
-      config.lighthouseFlags.blockedUrlPatterns = process.env.THIRDPARTY_TO_BLOCK.split(',');
+    const lighthouseFlags = {...config.lighthouseFlags};
+    if (msgParts[1] === thirdPartyBlocked) {
+      lighthouseFlags.blockedUrlPatterns = process.env.THIRDPARTY_TO_BLOCK.split(',');
     }
     if (msgParts[2]) {
-      config.lighthouseFlags.emulatedFormFactor = msgParts[2];
+      lighthouseFlags.emulatedFormFactor = msgParts[2];
     }
 
     const ids = source.map(obj => obj.id);
@@ -381,7 +384,7 @@ async function launchLighthouse (event, callback) {
       return log(`${msg}: Found active event (${Math.round(eventState.delta)}s < ${Math.round(config.minTimeBetweenTriggers/1000)}s), aborting...`);
     }
 
-    const res = await launchBrowserWithLighthouse(id, url);
+    const res = await launchBrowserWithLighthouse(id, url, lighthouseFlags);
 
     await writeLogAndReportsToStorage(res, msg);
     const json = createJSON(res.lhr, id);
