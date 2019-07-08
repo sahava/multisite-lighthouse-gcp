@@ -20,6 +20,6 @@
   },
   "lighthouseFlags": {
     "output": ["html", "json"],
-    "emulatedFormFactor": "desktop"
+    "emulatedFormFactor": "mobile"
   }
 }

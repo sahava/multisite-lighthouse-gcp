@@ -29,6 +29,7 @@ const puppeteer = require(`puppeteer`);
 const lighthouse = require(`lighthouse`);
 const uuidv1 = require(`uuid/v1`);
 const {Validator} = require(`jsonschema`);
+const requestGet = promisify(require('request').get)
 
 const {BigQuery} = require(`@google-cloud/bigquery`);
 const {PubSub} = require(`@google-cloud/pubsub`);
@@ -56,6 +57,10 @@ const storage = new Storage({
 const validator = new Validator;
 
 const log = console.log;
+
+const separator = '_';
+const thirdPartyBlocked = '3PBlocked';
+const thirdPartyIncluded = '3PIncluded';
 
 /**
  * Function that runs lighthouse in a headless browser instance.
@@ -103,6 +108,7 @@ function createJSON(obj, id) {
     site_id: id,
     user_agent: obj.userAgent,
     emulated_as: obj.configSettings.emulatedFormFactor,
+    blocked_urls: obj.configSettings.blockedUrlPatterns || [],
     accessibility: [{
       total_score: obj.categories.accessibility.score,
       bypass_repetitive_content: obj.audits.bypass.score === 1,
@@ -210,13 +216,37 @@ function toNdjson(data) {
  */
 async function sendAllPubsubMsgs(ids) {
   return await Promise.all(ids.map(async (id) => {
-    const msg = Buffer.from(id);
-    log(`${id}: Sending init PubSub message`);
+    const msg = Buffer.from(id + `${separator}${thirdPartyIncluded}${separator}mobile`);
+    log(`${id}: Sending init PubSub message [3P mobile]`);
     await pubsub
       .topic(config.pubsubTopicId)
       .publisher()
       .publish(msg);
-    log(`${id}: Init PubSub message sent`)
+    log(`${id}: Init PubSub message sent [3P mobile]`);
+
+    log(`${id}: Sending init PubSub message [3P desktop]`);
+    const msgThirdPDesktop = Buffer.from(id+ `${separator}${thirdPartyIncluded}${separator}desktop`);
+    await pubsub
+      .topic(config.pubsubTopicId)
+      .publisher()
+      .publish(msgThirdPDesktop);
+    log(`${id}: Init PubSub message sent [3P desktop]`);
+
+    log(`${id}: Sending init PubSub message [no 3P mobile]`);
+    const msgNoThirdParyMobile = Buffer.from(id+ `${separator}${thirdPartyBlocked}${separator}mobile`);
+    await pubsub
+      .topic(config.pubsubTopicId)
+      .publisher()
+      .publish(msgNoThirdParyMobile);
+    log(`${id}: Init PubSub message sent [no 3P mobile]`);
+
+    log(`${id}: Sending init PubSub message [no 3P desktop]`);
+    const msgNoThirdParyDesktop = Buffer.from(id+ `${separator}${thirdPartyBlocked}${separator}desktop`);
+    await pubsub
+      .topic(config.pubsubTopicId)
+      .publisher()
+      .publish(msgNoThirdParyDesktop);
+    log(`${id}: Init PubSub message sent [no 3P desktop]`)
   }));
 }
 
@@ -303,8 +333,29 @@ async function checkEventState(id, timeNow) {
 async function launchLighthouse (event, callback) {
   try {
 
-    const source = config.source;
+    let source = config.source;
+    const sourceUrl = process.env.SOURCE_URL;
+    const sourceAuth = process.env.SOURCE_AUTH;
+    if (sourceUrl) {
+
+      const headers = { };
+      if (sourceAuth) {
+        headers.Authorization = sourceAuth;
+      }
+      const externalSource = await requestGet({uri: sourceUrl, headers: headers});
+      source = flatContentfulJson(externalSource)
+    }
+
     const msg = Buffer.from(event.data, 'base64').toString();
+    const msgParts = msg.split(separator);
+    const idMsg = msgParts[0];
+    if (msgParts[1] && msgParts[1] == thirdPartyBlocked) {
+      config.lighthouseFlags.blockedUrlPatterns = process.env.THIRDPARTY_TO_BLOCK.split(',');
+    }
+    if (msgParts[2]) {
+      config.lighthouseFlags.emulatedFormFactor = msgParts[2];
+    }
+
     const ids = source.map(obj => obj.id);
     const uuid = uuidv1();
     const metadata = {
@@ -314,41 +365,81 @@ async function launchLighthouse (event, callback) {
     };
 
     // If the Pub/Sub message is not valid
-    if (msg !== 'all' && !ids.includes(msg)) { return console.error('No valid message found!'); }
+    if (idMsg !== 'all' && !ids.includes(idMsg)) { return console.error('No valid message found!'); }
 
-    if (msg === 'all') { return sendAllPubsubMsgs(ids); }
+    if (idMsg === 'all') { return sendAllPubsubMsgs(ids); }
 
-    const [src] = source.filter(obj => obj.id === msg);
+    const [src] = source.filter(obj => obj.id === idMsg);
     const id = src.id;
     const url = src.url;
 
-    log(`${id}: Received message to start with URL ${url}`);
+    log(`${msg}: Received message to start with URL ${url}, third party ${msgParts[1]}, mode ${msgParts[2]}`);
 
     const timeNow = new Date().getTime();
-    const eventState = await checkEventState(id, timeNow);
+    const eventState = await checkEventState(msg, timeNow);
     if (eventState.active) {
-      return log(`${id}: Found active event (${Math.round(eventState.delta)}s < ${Math.round(config.minTimeBetweenTriggers/1000)}s), aborting...`);
+      return log(`${msg}: Found active event (${Math.round(eventState.delta)}s < ${Math.round(config.minTimeBetweenTriggers/1000)}s), aborting...`);
     }
 
     const res = await launchBrowserWithLighthouse(id, url);
 
-    await writeLogAndReportsToStorage(res, id);
+    await writeLogAndReportsToStorage(res, msg);
     const json = createJSON(res.lhr, id);
 
     json.job_id = uuid;
 
-    await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
+    // await writeFile(`/tmp/${uuid}.json`, toNdjson(json));
 
     log(`${id}: BigQuery job with ID ${uuid} starting for ${url}`);
 
-    return bigquery
-      .dataset(config.datasetId)
+    // const [job] = await bigquery
+    //   .dataset(config.datasetId)
+    //   .table('reports')
+    //   .load(`/tmp/${uuid}.json`, metadata);
+
+
+    const dataset = bigquery.dataset(config.datasetId);
+    const tableExists = await dataset.table('reports').exists();
+    if (!tableExists[0]) {
+      const options = {
+        schema: bqSchema
+      };
+      await dataset
+      .createTable('reports', options);
+    }
+
+    try {
+      const [result] = await dataset
       .table('reports')
-      .load(`/tmp/${uuid}.json`, metadata);
+      .insert({id: uuid, json: json}, {raw: true});
+    
+      log(`${id}: BigQuery job with ID ${uuid} finished with result ${JSON.stringify(result)}`);
+    } catch(err) {      
+      log('Error on insert of bigquery')
+      log(JSON.stringify(err))
+    }
 
   } catch(e) {
     console.error(e);
   }
+}
+
+function flatContentfulJson(json) {
+  const fields = JSON.parse(json.body).fields;
+  const sections = ['help', 'fmcTariffs', 'mobileTariffs', 'mobilePhones', 'fixedTariffs'];
+  const sourceArray = [];
+  sections.forEach(section => {
+    sourceArray.push({url: fields.json[section]['url'], id: fields.json[section]['name']})
+    fields.json[section]['list'].forEach(entry => {
+        sourceArray.push({url: entry.url, id: entry.name})
+        if (entry.list) {
+          entry.list.forEach(subEntry => {
+            sourceArray.push({url: subEntry.url, id: subEntry.name})
+          })
+      }
+    })
+  })
+  return sourceArray;
 }
 
 /**

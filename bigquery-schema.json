@@ -20,6 +20,12 @@
     "type": "STRING"
   },
   {
+    "description": "Blocked urls.",
+    "name": "blocked_urls",
+    "type": "STRING",
+    "mode": "REPEATED"
+  },
+  {
     "description": "The BigQuery Job ID of the load.",
     "name": "job_id",
     "type": "STRING"
