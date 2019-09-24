@@ -4,18 +4,17 @@ Run Lighthouse audits on URLs, and write the results daily into a BigQuery table
 # Steps (needs rewrite)
 
 1. Clone repo.
-2. Run `npm install` in directory.
-3. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
-4. Authenticate with `gcloud auth login`.
-5. Create a new GCP project.
-6. Enable Cloud Functions API and BigQuery API.
-7. Create a new dataset in BigQuery.
-8. Run `gcloud config set project <projectId>` in command line.
-9. Edit `config.json`, update list of `source` URLs and IDs, edit `projectId` to your GCP project ID, edit `datasetId` to the BigQuery dataset ID.
-10. Run `gcloud functions deploy launchLighthouse --trigger-topic launch-lighthouse --memory 2048 --timeout 540 --runtime=nodejs8`.
-11. Run `gcloud pubsub topics publish launch-lighthouse --message all` to audit all URLs in source list.
-12. Run `gcloud pubsub topics publish launch-lighthouse --message <source.id>` to audit just the URL with the given ID.
-13. Verify with Cloud Functions logs and a BigQuery query that the performance data ended up in BQ. Might take some time, especially the first run when the BQ table needs to be created.
+2. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
+3. Authenticate with `gcloud auth login`.
+4. Create a new GCP project.
+5. Enable Cloud Functions API and BigQuery API.
+6. Create a new dataset in BigQuery.
+7. Run `gcloud config set project <projectId>` in command line.
+8. Edit `config.json`, update list of `source` URLs and IDs, edit `projectId` to your GCP project ID, edit `datasetId` to the BigQuery dataset ID.
+9. Run `gcloud functions deploy launchLighthouse --trigger-topic launch-lighthouse --memory 2048 --timeout 540 --runtime=nodejs8`.
+10. Run `gcloud pubsub topics publish launch-lighthouse --message all` to audit all URLs in source list.
+11. Run `gcloud pubsub topics publish launch-lighthouse --message <source.id>` to audit just the URL with the given ID.
+12. Verify with Cloud Functions logs and a BigQuery query that the performance data ended up in BQ. Might take some time, especially the first run when the BQ table needs to be created.
 
 # How it works
 
