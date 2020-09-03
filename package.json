@@ -22,7 +22,7 @@
     "jsonschema": "^1.2.4",
     "lighthouse": "^4.0.0",
     "proxyquire": "^2.1.0",
-    "puppeteer": "1.11.0",
+    "puppeteer": "5.2.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
